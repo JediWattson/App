@@ -13,6 +13,7 @@ import ROUTES from '../../ROUTES';
 import * as OptionsListUtils from '../OptionsListUtils';
 import DateUtils from '../DateUtils';
 import * as ReportUtils from '../ReportUtils';
+import * as Report from './Report';
 import Log from '../Log';
 
 const allPolicies = {};
@@ -96,13 +97,15 @@ function deleteWorkspace(policyID, reports, policyName) {
 
         // Add closed actions to all chat reports linked to this policy
         ..._.map(reports, ({reportID, ownerEmail}) => {
+            const highestSequenceNumber = Report.getMaxSequenceNumber(reportID);
             const optimisticClosedReportAction = ReportUtils.buildOptimisticClosedReportAction(
+                highestSequenceNumber + 1,
                 ownerEmail,
                 policyName,
                 CONST.REPORT.ARCHIVE_REASON.POLICY_DELETED,
             );
             const optimisticReportActions = {};
-            optimisticReportActions[optimisticClosedReportAction.reportActionID] = optimisticClosedReportAction;
+            optimisticReportActions[optimisticClosedReportAction.clientID] = optimisticClosedReportAction;
             return {
                 onyxMethod: CONST.ONYX.METHOD.MERGE,
                 key: `${ONYXKEYS.COLLECTION.REPORT_ACTIONS}${reportID}`,
